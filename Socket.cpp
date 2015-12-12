@@ -7,11 +7,19 @@
 
 #include "Socket.h"
 
+void *get_in_addr(struct sockaddr *sa) {
+	if (sa->sa_family == AF_INET) {
+		return &(((struct sockaddr_in*) sa)->sin_addr);
+	}
+
+	return &(((struct sockaddr_in6*) sa)->sin6_addr);
+}
+
 Socket::Socket(): _sd(-1) {
 
 }
 
-Socket::Socket(int sd,std::string ip, std::string port): _ip(ip), _port(port), _sd(sd) {
+Socket::Socket(int sd,std::string ip, std::string port): _sd(sd), _ip(ip), _port(port)  {
 
 }
 
@@ -76,7 +84,7 @@ bool Socket::connectTo(std::string hostname,std::string port) {
 		// close the socket descriptor.
 		// print the error and move on to the next address.
 		if (connect(_sd, p->ai_addr, p->ai_addrlen) == -1) {
-			close(sockfd);
+			close(_sd);
 			perror("Socket::connectTo() ");
 			continue;
 		}
@@ -103,10 +111,15 @@ bool Socket::connectTo(std::string hostname,std::string port) {
 
 	// When we are done, we'll finally free the linked list returned by getaddrinfo().
 	freeaddrinfo(servinfo);
+
+	return true;
 }
 
 bool Socket::readData(std::vector<byte> &data)  {
-	char* buffer = malloc(sizeof(char) * MAXDATASIZE);
+	// Clear the vector.
+	data.clear();
+
+	char* buffer = (char *)malloc(sizeof(char) * MAXDATASIZE);
 
 	// Attempt to read data from the stream.
 	int lenRead = recv(_sd,(void* )buffer,MAXDATASIZE,0);
@@ -120,6 +133,7 @@ bool Socket::readData(std::vector<byte> &data)  {
 
 	// Copy the received data, to the vector.
 	data.insert( data.begin() , buffer , buffer + lenRead ) ;
+
 
 	// Free the buffer.
 	free(buffer);
@@ -141,7 +155,11 @@ bool Socket::transmitData(std::vector<byte> &data) {
 		// Send returns with the number of Bytes transmitted.
 		// The address given to the send function is computed as follows:
 		// 				Starting address of the data + number of bytes already sent.
-		int BytesSent = send( _sd, ((void *)&data[0]) + numBytesSent , numBytesToSend , 0 );
+		int BytesSent = send( _sd, ((byte *)&data[0]) , numBytesToSend , 0 );
+		if(BytesSent == -1) {
+			perror("Socket::transmitData() ");
+			return false;
+		}
 
 		// Increment the number of bytes sent.
 		numBytesSent += BytesSent;

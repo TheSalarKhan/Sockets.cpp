@@ -117,6 +117,8 @@ Socket ServerSocket::acceptIncoming() {
 
 	if(_sd == -1) {
 		perror("ServerSocker::acceptIncoming() socket not initialized properly, socket descriptor missing.");
+		Socket a;
+		return a;
 	}
 	// Integer type to hold the size of the incoming socket.
 	socklen_t sin_size;
