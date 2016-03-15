@@ -7,6 +7,7 @@
 
 #include "Socket.h"
 
+
 void *get_in_addr(struct sockaddr *sa) {
 	if (sa->sa_family == AF_INET) {
 		return &(((struct sockaddr_in*) sa)->sin_addr);
@@ -28,10 +29,10 @@ Socket::~Socket() {
 }
 
 bool Socket::isConnected() {
-	if(_sd != -1)
-		return true;
+	int val = fcntl(_sd,F_GETFL);
 
-	return false;
+	return (val == -1)? false: true;
+
 }
 
 bool Socket::connectTo(std::string hostname,std::string port) {
@@ -116,7 +117,9 @@ bool Socket::connectTo(std::string hostname,std::string port) {
 }
 
 bool Socket::readData(std::vector<byte> &data)  {
-	// Clear the vector.
+	// Clear the vector. set size =0.
+	// This does not have any effect on the capacity of the vector.
+
 	data.clear();
 
 	char* buffer = (char *)malloc(sizeof(char) * MAXDATASIZE);
@@ -130,6 +133,18 @@ bool Socket::readData(std::vector<byte> &data)  {
 		perror("Socket::readData() ");
 		return false;
 	}
+
+	// If the remote end has gracefully disconnected.
+	// recv() returns 0 only if we have requested a 0 byte buffer,
+	// or if the remote end has disconnected gracefully. Since, we know
+	// that we are not calling recv with a 0 byte buffer, hence a return of 0
+	// would mean that the other side has disconnected gracefully.
+
+	if(lenRead == 0) {
+		this->end();
+		return false;
+	}
+
 
 	// Copy the received data, to the vector.
 	data.insert( data.begin() , buffer , buffer + lenRead ) ;
@@ -175,4 +190,17 @@ bool Socket::transmitData(std::vector<byte> &data) {
 void Socket::end()  {
 	close(_sd);
 	_sd = -1;
+}
+
+
+int Socket::getSd() {
+	return _sd;
+}
+
+std::string Socket::getIP() {
+	return _ip;
+}
+
+std::string Socket::getPort() {
+	return _port;
 }

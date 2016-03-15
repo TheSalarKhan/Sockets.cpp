@@ -113,12 +113,11 @@ ServerSocket::~ServerSocket() {
 	// TODO Auto-generated destructor stub
 }
 
-Socket ServerSocket::acceptIncoming() {
+Socket* ServerSocket::acceptIncoming() {
 
 	if(_sd == -1) {
 		perror("ServerSocker::acceptIncoming() socket not initialized properly, socket descriptor missing.");
-		Socket a;
-		return a;
+		return nullptr;
 	}
 	// Integer type to hold the size of the incoming socket.
 	socklen_t sin_size;
@@ -135,8 +134,7 @@ Socket ServerSocket::acceptIncoming() {
 	// Print the error, and return null.
 	if (incomingSD == -1) {
 		perror("ServerSocket::acceptIncoming() error in accepting connection. ");
-		Socket a;
-		return a;
+		return nullptr;
 	}
 
 	// Else, get the connection information.
@@ -162,7 +160,7 @@ Socket ServerSocket::acceptIncoming() {
 	out << portNumber;
 	std::string port = out.str();
 
-	Socket toReturn(incomingSD,theirIp,port);
+	Socket* toReturn = new Socket(incomingSD,theirIp,port);
 	return toReturn;
 }
 

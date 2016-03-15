@@ -23,7 +23,7 @@ public:
 	/**
 	 * Accept a pending connection from the queue.
 	 */
-	Socket acceptIncoming();
+	Socket* acceptIncoming();
 
 	void end();
 private:

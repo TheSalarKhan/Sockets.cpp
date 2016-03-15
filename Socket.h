@@ -21,6 +21,7 @@
 #include <arpa/inet.h>
 #include <string>
 #include <vector>
+#include <fcntl.h>
 
 #define MAXDATASIZE 2048
 
@@ -62,6 +63,12 @@ public:
 
 
 	bool isConnected();
+
+	int getSd();
+
+	std::string getPort();
+
+	std::string getIP();
 
 	/**
 	 * End the socket by closing the socket descriptor
